@@ -6,15 +6,20 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const session = require('express-session');
-const passportRoutes = require('./passport'); // Import your passport configuration
+require('./passport'); // Import your passport configuration
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Middleware setup
 app.use(cors());
 app.use(express.json());
-app.use(session({ secret: 'your-session-secret', resave: false, saveUninitialized: true }));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-session-secret',
+  resave: false,
+  saveUninitialized: true
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -38,7 +43,7 @@ app.post('/register', async (req, res) => {
     await db.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hashedPassword]);
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
-    console.error('Registration error:', error.message);
+    console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -59,7 +64,7 @@ app.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
-    console.error('Login error:', error.message);
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -76,36 +81,42 @@ app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRe
   res.redirect('/');
 });
 
-// User Profile endpoint
-app.post('/user-profile', async (req, res) => {
-  const { userId, fullName, linkedinHandle, contactNo, info, email } = req.body;
-
+// Route to fetch user profile
+app.get('/profile/:userId', async (req, res) => {
+  const { userId } = req.params;
   try {
-    await db.query('INSERT INTO user_profiles (user_id, full_name, linkedin_handle, contact_no, info, email) VALUES (?, ?, ?, ?, ?, ?)', 
-      [userId, fullName, linkedinHandle, contactNo, info, email]);
-    res.status(201).json({ message: 'Profile information saved successfully' });
+    const [rows] = await db.query('SELECT fullName, contactNo, email, linkedin, info FROM users WHERE id = ?', [userId]);
+    if (rows.length > 0) {
+      res.status(200).json(rows[0]);
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
   } catch (error) {
-    console.error('Profile error:', error.message);
+    console.error('Error fetching profile data:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
-// Add this endpoint to your existing Express server setup
+
+// Update user profile
 app.post('/profile/:userId', async (req, res) => {
   const { userId } = req.params;
   const { fullName, contactNo, email, linkedin, info } = req.body;
   
   try {
-    // Update profile information in the database
-    await db.query('UPDATE users SET fullName = ?, contactNo = ?, email = ?, linkedin = ?, info = ? WHERE id = ?', 
-      [fullName, contactNo, email, linkedin, info, userId]);
-
-    res.status(200).json({ message: 'Profile updated successfully' });
+    const [result] = await db.query(
+      `UPDATE users SET fullName = ?, contactNo = ?, email = ?, linkedin = ?, info = ? WHERE id = ?`,
+      [fullName, contactNo, email, linkedin, info, userId]
+    );
+    if (result.affectedRows > 0) {
+      res.status(200).json({ message: 'Profile updated successfully' });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
   } catch (error) {
-    console.error('Error updating profile:', error.message);
+    console.error('Error updating profile:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
-
 
 // Start the server
 app.listen(PORT, () => {

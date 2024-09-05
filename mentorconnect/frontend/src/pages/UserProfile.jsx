@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 
@@ -9,6 +9,26 @@ function UserProfile() {
   const [email, setEmail] = useState('');
   const [linkedin, setLinkedin] = useState('');
   const [info, setInfo] = useState('');
+
+  useEffect(() => {
+    // Fetch user profile data when the component mounts
+    const fetchUserProfile = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/profile/${userId}`);
+        const { fullName, contactNo, email, linkedin, info } = response.data;
+        setFullName(fullName);
+        setContactNo(contactNo);
+        setEmail(email);
+        setLinkedin(linkedin);
+        setInfo(info);
+      } catch (error) {
+        console.error('Error fetching profile data:', error.response ? error.response.data : error.message);
+        alert('Error fetching profile data: ' + (error.response?.data?.message || error.message));
+      }
+    };
+
+    fetchUserProfile();
+  }, [userId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

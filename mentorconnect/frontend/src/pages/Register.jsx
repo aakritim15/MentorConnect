@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,6 +17,9 @@ function Register() {
     try {
       const response = await axios.post('http://localhost:5000/register', { email, password });
       alert(response.data.message); // Show server message
+
+      // Assuming successful registration, redirect to user profile
+      navigate('/user-profile'); 
     } catch (error) {
       console.error('Error during registration:', error.response ? error.response.data : error.message);
       alert('Registration failed: ' + (error.response?.data?.message || error.message));
@@ -69,3 +74,4 @@ function Register() {
 }
 
 export default Register;
+    

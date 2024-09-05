@@ -1,38 +1,48 @@
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const FacebookStrategy = require('passport-facebook').Strategy;
-const User = require('./models/User');
+const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcryptjs');
+const mysql = require('mysql2/promise');
 
-// Google Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: '/auth/google/callback'
-}, async (accessToken, refreshToken, profile, done) => {
-  const user = await User.findOne({ googleId: profile.id });
-  if (user) return done(null, user);
-  const newUser = await new User({ googleId: profile.id, fullName: profile.displayName }).save();
-  done(null, newUser);
-}));
+// Configure MySQL connection
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+});
 
-// Facebook Strategy
-passport.use(new FacebookStrategy({
-  clientID: process.env.FACEBOOK_CLIENT_ID,
-  clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-  callbackURL: '/auth/facebook/callback',
-  profileFields: ['id', 'displayName', 'email']
-}, async (accessToken, refreshToken, profile, done) => {
-  const user = await User.findOne({ facebookId: profile.id });
-  if (user) return done(null, user);
-  const newUser = await new User({ facebookId: profile.id, fullName: profile.displayName }).save();
-  done(null, newUser);
-}));
+// Configure passport-local strategy
+passport.use(new LocalStrategy(
+  async (username, password, done) => {
+    try {
+      const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [username]);
+      if (rows.length === 0) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+      const user = rows[0];
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+      return done(null, user);
+    } catch (err) {
+      return done(err);
+    }
+  }
+));
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-  const user = await User.findById(id);
-  done(null, user);
+  try {
+    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return done(new Error('User not found'));
+    }
+    done(null, rows[0]);
+  } catch (err) {
+    done(err);
+  }
 });
