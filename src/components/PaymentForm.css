@@ -1,0 +1,16 @@
+/* src/components/PaymentForm.css */
+.payment-form-container {
+    padding: 30px;
+  }
+  
+  .payment-form {
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .pay-now-btn {
+    background-color: #5867dd;
+    width: 100%;
+  }
+  

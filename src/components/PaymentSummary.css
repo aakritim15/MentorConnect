@@ -1,0 +1,11 @@
+/* src/components/PaymentSummary.css */
+.payment-summary {
+    border: 1px solid #ddd;
+    border-radius: 10px;
+  }
+  
+  .amount {
+    color: #28a745;
+    font-size: 3rem;
+  }
+  

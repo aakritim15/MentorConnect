@@ -1,0 +1,22 @@
+/* src/components/Sidebar.css */
+.sidebar {
+    background-color: #f8f9fa;
+    width: 250px;
+  }
+  
+  .nav-link.active {
+    background-color: #5867dd;
+    color: white;
+    border-radius: 10px;
+  }
+  
+  .nav-link {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+  }
+  
+  .badge {
+    background-color: #dc3545;
+    color: white;
+  }
+  

@@ -1,25 +1,27 @@
-import logo from './logo.svg';
+// src/App.js
+import React from 'react';
+import { Container, Row, Col } from 'react-bootstrap';
+import Sidebar from './components/Sidebar';
+import PaymentForm from './components/PaymentForm';
+import PaymentSummary from './components/PaymentSummary';
 import './App.css';
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Container fluid>
+      <Row>
+        <Col xs={3} className="p-0">
+          <Sidebar />
+        </Col>
+        <Col xs={6} className="d-flex align-items-center">
+          <PaymentForm />
+        </Col>
+        <Col xs={3} className="d-flex align-items-center">
+          <PaymentSummary />
+        </Col>
+      </Row>
+    </Container>
   );
-}
+};
 
 export default App;
